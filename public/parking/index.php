@@ -34,7 +34,7 @@ if (!isset($_GET['page'])) {
     $dotenv = new Dotenv\Dotenv(__DIR__ . "/../../");
     $dotenv->load();
     header("Access-Control-Allow-Origin: *");
-    header('Location: ' . $_ENV["BASE_URL"] . 'parking?page=' . $filename);
+    header('Location: ' . $_ENV["BASE_URL"] . '?page=' . $filename);
 } else {
     $graphs = $fs->get_graphs_from_file_with_links($filename);
     \otn\linkeddatex2\View::view($_SERVER['HTTP_ACCEPT'], $graphs);
