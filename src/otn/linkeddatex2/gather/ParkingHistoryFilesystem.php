@@ -57,7 +57,7 @@ class ParkingHistoryFilesystem
             $triple = [
                 'subject' => $file_subject,
                 'predicate' => "hydra:previous",
-                'object' => "https://" . $server . "?page=" . $prev,
+                'object' => $server . "?page=" . $prev,
                 'graph' => '#Metadata'
             ];
             array_push($multigraph, $triple);
@@ -66,7 +66,7 @@ class ParkingHistoryFilesystem
             $triple = [
                 'subject' => $file_subject,
                 'predicate' => "hydra:next",
-                'object' => "https://" . $server . "?page=" . $next,
+                'object' => $server . "?page=" . $next,
                 'graph' => '#Metadata'
             ];
             array_push($multigraph, $triple);

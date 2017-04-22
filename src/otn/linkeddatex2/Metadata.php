@@ -20,36 +20,19 @@ Class Metadata
         ]);
     }
 
-    public static function add_counts_to_multigraph(&$multigraph) {
+    public static function addCountsToGraph(&$multigraph) {
         $dotenv = new Dotenv\Dotenv(__DIR__ . "/../../../");
         $dotenv->load();
         $base_url = $_ENV["BASE_URL"];
-
-        $graph_counts = array();
+        
         $triples = 0;
         foreach ($multigraph as $quad) {
-            if ($quad['graph'] !== "") {
-                if (!isset($graph_counts[$quad['graph']])) {
-                    $graph_counts[$quad['graph']] = 1;
-                } else {
-                    $graph_counts[$quad['graph']]++;
-                }
-            }
-            $triples++;
-        }
-        foreach ($graph_counts as $graph => $count) {
-            array_push($multigraph, [
-                'graph' => $graph,
-                'subject' => $graph,
-                'predicate' => 'void:triples',
-                'object' => $graph_counts[$graph] + 1
-            ]);
             $triples++;
         }
         array_push($multigraph, [
             'subject' => $base_url,
             'predicate' => 'void:triples',
-            'object' => $triples + 1
+            'object' => \pietercolpaert\hardf\Util::createLiteral($triples + 1, 'http://www.w3.org/2001/XMLSchema#integer')
         ]);
     }
 
@@ -67,9 +50,9 @@ Class Metadata
         $mappingO = $base_url . "#mapping0";
 
         $doc_triples = [
-            ['rdfs:label', '"Dynamic parking data in Ghent"'],
-            ['rdfs:comment', '"This document is a mapping from the Datex2 by Pieter Colpaert as part of the Open Transport Net project"'],
-            ['foaf:homepage', 'https://github.com/opentransportnet/ghent-datex2-to-linkeddata'],
+            ['rdfs:label', '"Historic and real-time parking data in Ghent"'],
+            ['rdfs:comment', '"This document is a proof of concept mapping using Linked Datex2 by Pieter Colpaert"'],
+            ['foaf:homepage', 'https://github.com/smartflanders/ghent-datex2-to-linkeddata'],
             ['cc:license', "https://data.stad.gent/algemene-licentie"]];
         foreach ($doc_triples as $triple) {
             self::addTriple($result, $document, $triple[0], $triple[1]);
@@ -87,6 +70,8 @@ Class Metadata
         self::addTriple($result, $search, "hydra:mapping", $mappingP);
         self::addTriple($result, $search, "hydra:mapping", $mappingO);
 
+        //TODO: add triples about how to go to a specific page
+        
         return $result;
     }
 }
