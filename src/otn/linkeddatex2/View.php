@@ -37,7 +37,7 @@ Class View
         foreach ($metadata as $quad) {
             array_push($graph, $quad);
         }
-        Metadata::add_counts_to_multigraph($graph);
+        Metadata::addCountsToGraph($graph);
         $writer->addPrefixes(GhentToRDF::getPrefixes());
         $writer->addTriples($graph);
         echo $writer->end();
