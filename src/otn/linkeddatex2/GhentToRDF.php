@@ -33,7 +33,11 @@ Class GhentToRDF
             "geo" => "http://www.w3.org/2003/01/geo/wgs84_pos#",
             "owl" => "http://www.w3.org/2002/07/owl#",
             "rdfs" => "http://www.w3.org/2000/01/rdf-schema#",
-            "hydra" => "http://www.w3.org/ns/hydra/core#"
+            "hydra" => "http://www.w3.org/ns/hydra/core#",
+            "void" => "http://rdfs.org/ns/void#",
+            "rdf" => "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+            "foaf" => "http://xmlns.com/foaf/0.1/",
+            "cc" => "http://creativecommons.org/ns#"
         ];
     }
 
@@ -45,7 +49,7 @@ Class GhentToRDF
 
         $url = self::$urls[$type];
 
-        // Map parking ID's to their URI's
+        // Map parking IDs to their URIs
         $parkingURIs = [
             "1bcd7c6f-563b-4c07-803d-a2ad05014c9f" => "https://stad.gent/id/parking/P7",
             "a13c076c-4088-4623-bfcb-41ab45cb8f9f" => "https://stad.gent/id/parking/P10",

@@ -6,6 +6,7 @@ use \League\Flysystem\Adapter\Local;
 use \League\Flysystem\Filesystem;
 use pietercolpaert\hardf\TriGParser;
 use pietercolpaert\hardf\TriGWriter;
+use \Dotenv;
 
 class ParkingHistoryFilesystem
 {
@@ -22,6 +23,8 @@ class ParkingHistoryFilesystem
         $this->res_fs = new Filesystem($res_adapter);
         $this->basename_length = 19;
         $this->minute_interval = 5;
+        $dotenv = new Dotenv\Dotenv(__DIR__ . "/../../../../");
+        $dotenv->load();
 
         if (!$this->res_fs->has("static_data.turtle")) {
             $this->refresh_static_data();
@@ -33,38 +36,20 @@ class ParkingHistoryFilesystem
         return $this->out_fs->has($filename);
     }
 
-    // Get the contents of a file
-    public function get_file_contents($filename) {
-        if ($this->has_file($filename)) {
-            return $this->out_fs->read($filename);
-        }
-        return false;
-    }
-
+    // Returns fully dressed contents of file (with metadata, static data, etc)
     public function get_graphs_from_file_with_links($filename) {
         $contents = $this->get_file_contents($filename);
         $trig_parser = new TriGParser(["format" => "trig"]);
         $turtle_parser = new TriGParser(["format" => "turtle"]);
-        $graphs = [];
         $multigraph = $trig_parser->parse($contents);
         $static_data = $turtle_parser->parse($this->get_static_data());
-        foreach ($multigraph as $quad) {
-            if (!in_array($quad['graph'], $graphs)) {
-                array_push($graphs, $quad['graph']);
-            }
-        }
-        foreach ($graphs as $graph) {
-            foreach($static_data as $triple) {
-                $triple['graph'] = $graph;
-                array_push($multigraph, $triple);
-            }
+        // Add static data in default graph
+        foreach($static_data as $triple) {
+            array_push($multigraph, $triple);
         }
 
-        $server = $_SERVER["SERVER_NAME"];
-        if ($_SERVER["SERVER_PORT"] != "80") {
-            $server = $server . ":" . $_SERVER["SERVER_PORT"];
-        }
-        $file_subject = $server . "/parking?page=" . $filename;
+        $server = $_ENV["BASE_URL"];
+        $file_subject = $server . "?page=" . $filename;
         $file_timestamp = strtotime(substr($filename, 0, $this->basename_length));
         $prev = $this->get_prev_for_timestamp($file_timestamp);
         $next = $this->get_next_for_timestamp($file_timestamp);
@@ -72,8 +57,8 @@ class ParkingHistoryFilesystem
             $triple = [
                 'subject' => $file_subject,
                 'predicate' => "hydra:previous",
-                'object' => "http://" . $server . "/parking?page=" . $prev,
-                'graph' => 'Metadata'
+                'object' => "https://" . $server . "?page=" . $prev,
+                'graph' => '#Metadata'
             ];
             array_push($multigraph, $triple);
         }
@@ -81,8 +66,8 @@ class ParkingHistoryFilesystem
             $triple = [
                 'subject' => $file_subject,
                 'predicate' => "hydra:next",
-                'object' => "http://" . $server . "/parking?page=" . $next,
-                'graph' => 'Metadata'
+                'object' => "https://" . $server . "?page=" . $next,
+                'graph' => '#Metadata'
             ];
             array_push($multigraph, $triple);
         }
@@ -113,24 +98,6 @@ class ParkingHistoryFilesystem
         return false;
     }
 
-    // Get next page for requested timestamp
-    public function get_next_for_timestamp($timestamp) {
-        $next_ts = $this->get_next_timestamp_for_timestamp($timestamp);
-        if ($next_ts) {
-            return $this->get_filename_for_timestamp($next_ts);
-        }
-        return false;
-    }
-
-    // Get previous page for requested timestamp (this is the previous page to page_for_timestamp)
-    public function get_prev_for_timestamp($timestamp) {
-        $prev_ts = $this->get_prev_timestamp_for_timestamp($timestamp);
-        if ($prev_ts) {
-            return $this->get_filename_for_timestamp($prev_ts);
-        }
-        return false;
-    }
-
     // Get the last written page (closest to now)
     public function get_last_page() {
         return $this->get_closest_page_for_timestamp(time());
@@ -146,35 +113,18 @@ class ParkingHistoryFilesystem
 
         $filename = $this->get_filename_for_timestamp($timestamp);
 
-        $multigraph = [
-            'prefixes' => [],
-            'triples' => []
-        ];
+        $multigraph = array();
         if ($this->out_fs->has($filename)) {
             $trig_parser = new TriGParser(["format" => "trig"]);
-            $multigraph['triples'] = $trig_parser->parse($this->out_fs->read($filename));
+            $multigraph = $trig_parser->parse($this->out_fs->read($filename));
         }
         foreach($graph["triples"] as $quad) {
-            array_push($multigraph['triples'], $quad);
-        }
-        foreach($graph['prefixes'] as $prefix => $iri) {
-            if (!in_array($prefix, $multigraph['prefixes'])) {
-                $multigraph['prefixes'][$prefix] = $iri;
-            }
+            array_push($multigraph, $quad);
         }
         $trig_writer = new TriGWriter();
-        $trig_writer->addPrefixes($multigraph['prefixes']);
-        $trig_writer->addTriples($multigraph['triples']);
+        $trig_writer->addPrefix("datex", "http://vocab.datex.org/terms#");
+        $trig_writer->addTriples($multigraph);
         $this->out_fs->put($filename, $trig_writer->end());
-    }
-
-    // Refresh the static data
-    public function refresh_static_data() {
-        $graph = GraphProcessor::get_static_data();
-        $writer = new TriGWriter();
-        $writer->addPrefixes($graph["prefixes"]);
-        $writer->addTriples($graph["triples"]);
-        $this->res_fs->write("static_data.turtle", $writer->end());
     }
 
     // PRIVATE METHODS
@@ -197,7 +147,7 @@ class ParkingHistoryFilesystem
 
     // Get appropriate filename for given timestamp
     private function get_filename_for_timestamp($timestamp) {
-        return substr(date('c', $this->round_timestamp($timestamp)), 0, $this->basename_length) . ".turtle";
+        return substr(date('c', $this->round_timestamp($timestamp)), 0, $this->basename_length);
     }
 
     // Get the static data content
@@ -231,5 +181,40 @@ class ParkingHistoryFilesystem
             }
         }
         return false;
+    }
+
+    // Get the contents of a file
+    private function get_file_contents($filename) {
+        if ($this->has_file($filename)) {
+            return $this->out_fs->read($filename);
+        }
+        return false;
+    }
+
+    // Get next page for requested timestamp
+    private function get_next_for_timestamp($timestamp) {
+        $next_ts = $this->get_next_timestamp_for_timestamp($timestamp);
+        if ($next_ts) {
+            return $this->get_filename_for_timestamp($next_ts);
+        }
+        return false;
+    }
+
+    // Get previous page for requested timestamp (this is the previous page to page_for_timestamp)
+    private function get_prev_for_timestamp($timestamp) {
+        $prev_ts = $this->get_prev_timestamp_for_timestamp($timestamp);
+        if ($prev_ts) {
+            return $this->get_filename_for_timestamp($prev_ts);
+        }
+        return false;
+    }
+
+    // Refresh the static data
+    private function refresh_static_data() {
+        $graph = GraphProcessor::get_static_data();
+        $writer = new TriGWriter();
+        $writer->addPrefixes($graph["prefixes"]);
+        $writer->addTriples($graph["triples"]);
+        $this->res_fs->write("static_data.turtle", $writer->end());
     }
 }

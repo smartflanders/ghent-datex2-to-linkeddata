@@ -13,10 +13,43 @@ Class Metadata
 {
     private static function addTriple(&$graph, $subject, $predicate, $object) {
         array_push($graph, [
-            'graph' => 'Metadata',
+            'graph' => '#Metadata',
             'subject' => $subject,
             'predicate' => $predicate,
             'object' => $object
+        ]);
+    }
+
+    public static function add_counts_to_multigraph(&$multigraph) {
+        $dotenv = new Dotenv\Dotenv(__DIR__ . "/../../../");
+        $dotenv->load();
+        $base_url = $_ENV["BASE_URL"];
+
+        $graph_counts = array();
+        $triples = 0;
+        foreach ($multigraph as $quad) {
+            if ($quad['graph'] !== "") {
+                if (!isset($graph_counts[$quad['graph']])) {
+                    $graph_counts[$quad['graph']] = 1;
+                } else {
+                    $graph_counts[$quad['graph']]++;
+                }
+            }
+            $triples++;
+        }
+        foreach ($graph_counts as $graph => $count) {
+            array_push($multigraph, [
+                'graph' => $graph,
+                'subject' => $graph,
+                'predicate' => 'void:triples',
+                'object' => $graph_counts[$graph] + 1
+            ]);
+            $triples++;
+        }
+        array_push($multigraph, [
+            'subject' => $base_url,
+            'predicate' => 'void:triples',
+            'object' => $triples + 1
         ]);
     }
 
@@ -26,7 +59,6 @@ Class Metadata
         $base_url = $_ENV["BASE_URL"];
 
         $result = array();
-        //$result["prefixes"]["hydra"] = "http://www.w3.org/ns/hydra/core#";
         $dataset = $base_url . "#dataset";
         $document = $base_url;
         $search = $base_url . "#search";
@@ -35,15 +67,14 @@ Class Metadata
         $mappingO = $base_url . "#mapping0";
 
         $doc_triples = [
-            ['void:triples', '"200"'],
             ['rdfs:label', '"Dynamic parking data in Ghent"'],
             ['rdfs:comment', '"This document is a mapping from the Datex2 by Pieter Colpaert as part of the Open Transport Net project"'],
             ['foaf:homepage', 'https://github.com/opentransportnet/ghent-datex2-to-linkeddata'],
             ['cc:license', "https://data.stad.gent/algemene-licentie"]];
-
         foreach ($doc_triples as $triple) {
             self::addTriple($result, $document, $triple[0], $triple[1]);
         }
+
         self::addTriple($result, $dataset, "hydra:search", $search);
         self::addTriple($result, $mappingS, "hydra:variable", '"s"');
         self::addTriple($result, $mappingP, "hydra:variable", '"p"');
