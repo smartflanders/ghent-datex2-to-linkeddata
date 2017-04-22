@@ -1,6 +1,6 @@
 <?php
 require __DIR__ . '/../../vendor/autoload.php';
-
+use \Dotenv;
 // TODO publish static data with cache header on separate api point (no priority)
 
 // If no preferred content type is specified, prefer turtle
@@ -31,12 +31,10 @@ if (!isset($_GET['page']) && !isset($_GET['time'])) {
 }
 
 if (!isset($_GET['page'])) {
-    $server = $_SERVER["SERVER_NAME"];
-    if ($_SERVER["SERVER_PORT"] != "80") {
-        $server = $server . ":" . $_SERVER["SERVER_PORT"];
-    }
+    $dotenv = new Dotenv\Dotenv(__DIR__ . "/../../../../");
+    $dotenv->load();
     header("Access-Control-Allow-Origin: *");
-    header('Location: http://' . $server . '/parking?page=' . $filename);
+    header('Location: ' . $_ENV["BASE_URL"] . 'parking?page=' . $filename);
 } else {
     $graphs = $fs->get_graphs_from_file_with_links($filename);
     \otn\linkeddatex2\View::view($_SERVER['HTTP_ACCEPT'], $graphs);
