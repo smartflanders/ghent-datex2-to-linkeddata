@@ -31,7 +31,7 @@ if (!isset($_GET['page']) && !isset($_GET['time'])) {
 }
 
 if (!isset($_GET['page'])) {
-    $dotenv = new Dotenv\Dotenv(__DIR__ . "/../../../../");
+    $dotenv = new Dotenv\Dotenv(__DIR__ . "/../../");
     $dotenv->load();
     header("Access-Control-Allow-Origin: *");
     header('Location: ' . $_ENV["BASE_URL"] . 'parking?page=' . $filename);
