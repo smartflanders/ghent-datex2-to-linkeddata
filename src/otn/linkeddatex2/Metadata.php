@@ -47,7 +47,7 @@ Class Metadata
         $search = $base_url . "#search";
         $mappingS = $base_url . "#mappingS";
         $mappingP = $base_url . "#mappingP";
-        $mappingO = $base_url . "#mapping0";
+        $mappingO = $base_url . "#mappingO";
 
         $doc_triples = [
             ['rdfs:label', '"Historic and real-time parking data in Ghent"'],
@@ -65,7 +65,7 @@ Class Metadata
         self::addTriple($result, $mappingS, "hydra:property", '"subject"');
         self::addTriple($result, $mappingP, "hydra:property", '"property"');
         self::addTriple($result, $mappingO, "hydra:property", '"object"');
-        self::addTriple($result, $search, "hydra:template", $base_url);
+        self::addTriple($result, $search, "hydra:template", '"' . $base_url . '"');
         self::addTriple($result, $search, "hydra:mapping", $mappingS);
         self::addTriple($result, $search, "hydra:mapping", $mappingP);
         self::addTriple($result, $search, "hydra:mapping", $mappingO);
