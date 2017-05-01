@@ -32,7 +32,8 @@ Class Metadata
         array_push($multigraph, [
             'subject' => $base_url,
             'predicate' => 'void:triples',
-            'object' => \pietercolpaert\hardf\Util::createLiteral($triples + 1, 'http://www.w3.org/2001/XMLSchema#integer')
+            'object' => \pietercolpaert\hardf\Util::createLiteral($triples + 1, 'http://www.w3.org/2001/XMLSchema#integer'),
+            'graph'=> "#Metadata"
         ]);
     }
 
@@ -58,6 +59,7 @@ Class Metadata
             self::addTriple($result, $document, $triple[0], $triple[1]);
         }
 
+        //This is a fake search sequence to trick the current version of the Linked Data Fragments client to work with this file
         self::addTriple($result, $dataset, "hydra:search", $search);
         self::addTriple($result, $mappingS, "hydra:variable", '"s"');
         self::addTriple($result, $mappingP, "hydra:variable", '"p"');
