@@ -11,7 +11,7 @@ use pietercolpaert\hardf\TriGWriter;
 
 Class View
 {
-    private static function headers($acceptHeader) {
+    private static function headers($acceptHeader, $historic) {
         // Content negotiation using vendor/willdurand/negotiation
         $negotiator = new \Negotiation\Negotiator();
         $priorities = array('text/turtle','application/rdf+xml');
@@ -20,7 +20,11 @@ Class View
         header("Content-type: $value");
 
         //Max age is 1/2 minute for caches
-        header("Cache-Control: max-age=30");
+        if ($historic) {
+            header("Cache-Control: max-age=31536000");
+        } else {
+            header("Cache-Control: max-age=30");
+        }
 
         //Allow Cross Origin Resource Sharing
         header("Access-Control-Allow-Origin: *");
@@ -30,8 +34,8 @@ Class View
         return $value;
     }
 
-    public static function view($acceptHeader, $graph){
-        $value = self::headers($acceptHeader);
+    public static function view($acceptHeader, $graph, $historic){
+        $value = self::headers($acceptHeader, $historic);
         $writer = new TriGWriter(["format" => $value]);
         $metadata = Metadata::get();
         foreach ($metadata as $quad) {
