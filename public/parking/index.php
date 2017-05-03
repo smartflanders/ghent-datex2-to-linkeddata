@@ -37,5 +37,9 @@ if (!isset($_GET['page'])) {
     header('Location: ' . $_ENV["BASE_URL"] . '?page=' . $filename);
 } else {
     $graphs = $fs->get_graphs_from_file_with_links($filename);
-    \otn\linkeddatex2\View::view($_SERVER['HTTP_ACCEPT'], $graphs);
+    $historic = true;
+    if ($filename === $fs->get_last_page()) {
+        $historic = false;
+    }
+    \otn\linkeddatex2\View::view($_SERVER['HTTP_ACCEPT'], $graphs, $historic);
 }
